@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Interaktiv Mushak</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; cursor: crosshair; }
+        canvas { display: block; }
+        .hint { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.4); font-family: system-ui; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="hint">🖱️ Istalgan joyga bosing!</div>
+    <canvas id="c"></canvas>
+    <script>
+        const c = document.getElementById('c'), ctx = c.getContext('2d');
+        let w, h, arr = [];
+        const resize = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
+        window.addEventListener('resize', resize); resize();
+
+        class Firework {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.hue = Math.random() * 360;
+                this.particles = [];
+                for(let i = 0; i < 60; i++) {
+                    const a = Math.random() * Math.PI * 2, s = Math.random() * 5 + 2;
+                    this.particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, decay: Math.random()*0.01 + 0.015 });
+                }
+            }
+            update() {
+                this.particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.vx *= 0.96; p.life -= p.decay; });
+                this.particles = this.particles.filter(p => p.life > 0);
+            }
+            draw() {
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = `hsl(${this.hue + Math.random()*20}, 100%, 60%)`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2); ctx.fill();
+                });
+            }
+        }
+
+        c.addEventListener('click', e => arr.push(new Firework(e.clientX, e.clientY)));
+        c.addEventListener('touchstart', e => arr.push(new Firework(e.touches[0].clientX, e.touches[0].clientY)));
+
+        function loop() {
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = 'rgba(5,5,5,0.25)'; ctx.fillRect(0,0,w,h);
+            arr.forEach(f => { f.update(); f.draw(); });
+            arr = arr.filter(f => f.particles.length > 0);
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
